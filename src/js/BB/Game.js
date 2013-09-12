@@ -15,7 +15,7 @@ function BB_Game(app, level) {
 	this.sound = 0;
 	this.border = 20;
 	this.score = new BB_Score(sprite);
-	this.overlay = new BB_Overlay(sprite, this.score, app.storage);
+	this.overlay = new BB_Overlay(sprite, this.score, level);
 	this.overlay.back.disabled = level <= 0;
 	this.overlay.next.disabled = level >= BB_Game.maps.length-1;
 	this.ball = new BB_Ball(sprite, map.b[0], map.b[1]);
@@ -185,7 +185,7 @@ BB_Game.prototype.on = function(e, x, y, touch) {
 				this.app.start(-1);
 			}
 		}
-	} else if (this.score.shot) {
+	} else if (this.score.shot && this.goal) {
 		switch (e) {
 			case 'start':
 			case 'move':

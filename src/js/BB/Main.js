@@ -12,7 +12,6 @@ function BB_Main(app) {
 	this.sound = new BB_Button(sprite, 140, 245, 100, 32, 360, 100);
 	this.sound.disabled = app.sound.disabled;
 	this.start = new BB_Button(sprite, 240, 245, 100, 32, 160, 100);
-	this.start.disabled = true;
 	this.border = 20;
 	this.repaint = true;
 	drawer.wood(0, 0, this.w, this.h, 10);
@@ -76,7 +75,6 @@ BB_Main.prototype.on = function(e, x, y, touch) {
 			}
 			break;
 		case 'load':
-			this.start.disabled = false;
 			this.repaint = true;
 			break;
 		case 'music':

@@ -4,10 +4,7 @@
  */
 function BB_App() {
 	var self = this;
-	this.resize();
-	this.drawer = new BB_Drawer().resize();
 	this.storage = new BB_Storage(BB_Game.maps.length);
-	this.sprite = new BB_Sprite().render(this.ctx, this.scale);
 	this.game = this.storage.getLevel();
 	this.sound = new BB_Sound(function() {
 		switch (this.index) {
@@ -21,16 +18,28 @@ function BB_App() {
 		}
 	});
 	this.sound.disabled = !this.storage.getSound();
-	this.scene = new BB_Main(this);
-	document.body.appendChild(self.drawer.canvas);
-	document.body.appendChild(self.canvas);
-	self.bind();
+	this.drawer = new BB_Drawer();
+	this.sprite = new BB_Sprite();
+	this.init();
+	document.body.appendChild(this.drawer.canvas);
+	document.body.appendChild(this.canvas);
+	this.bind();
 }
 
 /**
  * Extends CP_Canvas
  */
 BB_App.prototype = new CP_Canvas(480, 320);
+
+/**
+ * Init and resize app
+ */
+BB_App.prototype.init = function() {
+	this.resize();
+	this.drawer.resize();
+	this.sprite.render(this.ctx, this.scale * this.ratio);
+	this.scene = new BB_Main(this);
+};
 
 /**
  * Event handler
@@ -78,8 +87,12 @@ window.requestAnimFrame =
 	function(callback) { window.setTimeout(callback, 1000 / 60); };
 
 window.onload = function() {
-	window.scrollTo(0, 1);
-	setTimeout(function() {
-		new BB_App().run();
-	}, 1000);
+	var app = new BB_App(),
+		timer = null;
+	window.setTimeout(function() { app.run(); }, 500);
+	window.onresize = function() {
+		if (timer) window.clearTimeout(timer);
+		timer = window.setTimeout(function() { app.init(); }, 500);
+	};
 };
+

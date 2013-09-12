@@ -67,7 +67,9 @@ BB_Ball.prototype.run = function() {
  * Stop the animation
  */
 BB_Ball.prototype.stop = function() {
-	this.v = {x:0,y:0,d:0};
+	if (this.v) {
+		this.v = {x:0,y:0,d:0};
+	}
 };
 
 /**

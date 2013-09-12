@@ -25,10 +25,10 @@ BB_Drawer.prototype.info = function() {
 	var ctx = this.ctx,
 		title = "BOUNCING BUTTON",
 		desc = [
-			"Shot the red button",
+			"Shoot the red button 3 times",
 			"Collect all golden buttons",
 			"Avoid holes",
-			"Bounce on walls"
+			"Bounce off walls"
 		];
 	ctx.save();
 	ctx.font = "bold 36px Arial";

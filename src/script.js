@@ -178,10 +178,7 @@ CP_Item.prototype.run = function() {};
  */
 function BB_App() {
 	var self = this;
-	this.resize();
-	this.drawer = new BB_Drawer().resize();
 	this.storage = new BB_Storage(BB_Game.maps.length);
-	this.sprite = new BB_Sprite().render(this.ctx, this.scale);
 	this.game = this.storage.getLevel();
 	this.sound = new BB_Sound(function() {
 		switch (this.index) {
@@ -195,16 +192,28 @@ function BB_App() {
 		}
 	});
 	this.sound.disabled = !this.storage.getSound();
-	this.scene = new BB_Main(this);
-	document.body.appendChild(self.drawer.canvas);
-	document.body.appendChild(self.canvas);
-	self.bind();
+	this.drawer = new BB_Drawer();
+	this.sprite = new BB_Sprite();
+	this.init();
+	document.body.appendChild(this.drawer.canvas);
+	document.body.appendChild(this.canvas);
+	this.bind();
 }
 
 /**
  * Extends CP_Canvas
  */
 BB_App.prototype = new CP_Canvas(480, 320);
+
+/**
+ * Init and resize app
+ */
+BB_App.prototype.init = function() {
+	this.resize();
+	this.drawer.resize();
+	this.sprite.render(this.ctx, this.scale * this.ratio);
+	this.scene = new BB_Main(this);
+};
 
 /**
  * Event handler
@@ -252,11 +261,16 @@ window.requestAnimFrame =
 	function(callback) { window.setTimeout(callback, 1000 / 60); };
 
 window.onload = function() {
-	window.scrollTo(0, 1);
-	setTimeout(function() {
-		new BB_App().run();
-	}, 1000);
+	var app = new BB_App(),
+		timer = null;
+	window.setTimeout(function() { app.run(); }, 500);
+	window.onresize = function() {
+		if (timer) window.clearTimeout(timer);
+		timer = window.setTimeout(function() { app.init(); }, 500);
+	};
 };
+
+
 /**
  * The big red button
  * @param {BB_Sprite} sprite
@@ -326,7 +340,9 @@ BB_Ball.prototype.run = function() {
  * Stop the animation
  */
 BB_Ball.prototype.stop = function() {
-	this.v = {x:0,y:0,d:0};
+	if (this.v) {
+		this.v = {x:0,y:0,d:0};
+	}
 };
 
 /**
@@ -543,10 +559,10 @@ BB_Drawer.prototype.info = function() {
 	var ctx = this.ctx,
 		title = "BOUNCING BUTTON",
 		desc = [
-			"Shot the red button",
+			"Shoot the red button 3 times",
 			"Collect all golden buttons",
 			"Avoid holes",
-			"Bounce on walls"
+			"Bounce off walls"
 		];
 	ctx.save();
 	ctx.font = "bold 36px Arial";
@@ -672,7 +688,7 @@ function BB_Game(app, level) {
 	this.sound = 0;
 	this.border = 20;
 	this.score = new BB_Score(sprite);
-	this.overlay = new BB_Overlay(sprite, this.score, app.storage);
+	this.overlay = new BB_Overlay(sprite, this.score, level);
 	this.overlay.back.disabled = level <= 0;
 	this.overlay.next.disabled = level >= BB_Game.maps.length-1;
 	this.ball = new BB_Ball(sprite, map.b[0], map.b[1]);
@@ -842,7 +858,7 @@ BB_Game.prototype.on = function(e, x, y, touch) {
 				this.app.start(-1);
 			}
 		}
-	} else if (this.score.shot) {
+	} else if (this.score.shot && this.goal) {
 		switch (e) {
 			case 'start':
 			case 'move':
@@ -1096,7 +1112,6 @@ function BB_Main(app) {
 	this.sound = new BB_Button(sprite, 140, 245, 100, 32, 360, 100);
 	this.sound.disabled = app.sound.disabled;
 	this.start = new BB_Button(sprite, 240, 245, 100, 32, 160, 100);
-	this.start.disabled = true;
 	this.border = 20;
 	this.repaint = true;
 	drawer.wood(0, 0, this.w, this.h, 10);
@@ -1160,7 +1175,6 @@ BB_Main.prototype.on = function(e, x, y, touch) {
 			}
 			break;
 		case 'load':
-			this.start.disabled = false;
 			this.repaint = true;
 			break;
 		case 'music':
@@ -1176,9 +1190,11 @@ BB_Main.prototype.on = function(e, x, y, touch) {
  * @param {BB_Storage} storage
  * @constructor
  */
-function BB_Overlay(sprite, score) {
+function BB_Overlay(sprite, score, level) {
 	this.sprite = sprite;
 	this.score = score;
+	this.level = level;
+	this.levels = BB_Game.maps.length;
 	this.back = new BB_Button(sprite, 90, 220, 100, 32, 60, 100);
 	this.start = new BB_Button(sprite, 190, 220, 100, 32, 160, 100);
 	this.next = new BB_Button(sprite, 290, 220, 100, 32, 260, 100);
@@ -1194,6 +1210,7 @@ BB_Overlay.prototype = new CP_Item(480, 320);
  */
 BB_Overlay.prototype.paint = function(ctx) {
 	var high = this.score.high ? 'New Highscore!' : 'Highscore: ' + this.score.highscore,
+		level = 'Level: ' +  (this.level + 1) + '/' + this.levels,
 		balls = this.score.balls,
 		score = this.score.score,
 		sprite = this.sprite;
@@ -1206,8 +1223,11 @@ BB_Overlay.prototype.paint = function(ctx) {
 	ctx.fillStyle = "#f90";
 	ctx.strokeStyle = "#420";
 	ctx.font = "bold 24px Arial";
-	ctx.strokeText(high, 240, 90);
-	ctx.fillText(high, 240, 90);
+	ctx.strokeText(high, 240, 70);
+	ctx.fillText(high, 240, 70);
+	ctx.font = "bold 16px Arial";
+	ctx.strokeText(level, 240, 100);
+	ctx.fillText(level, 240, 100);
 	ctx.lineWidth = 6;
 	ctx.font = "bold 48px Arial";
 	ctx.strokeText(score, 240, 150);
@@ -1217,7 +1237,7 @@ BB_Overlay.prototype.paint = function(ctx) {
 	this.start.paint(ctx);
 	this.next.paint(ctx);
 	if (balls) {
-		sprite.paint(ctx, 240-balls*8, 180, balls*20, 20, 0, 80);
+		sprite.paint(ctx, 216, 180, 48, 16, 0, 116);
 	}
 };
 
@@ -1768,7 +1788,7 @@ BB_Storage.prototype.setScore = function(level, score, done) {
 		}
 		if (
 			done && 
-			level < this.levels && 
+			level < this.levels-1 && 
 			level == this.data.level
 		) {
 			this.data.level++;

@@ -39,7 +39,7 @@ BB_Storage.prototype.setScore = function(level, score, done) {
 		}
 		if (
 			done && 
-			level < this.levels && 
+			level < this.levels-1 && 
 			level == this.data.level
 		) {
 			this.data.level++;
